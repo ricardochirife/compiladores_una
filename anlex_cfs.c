@@ -60,6 +60,7 @@ int estado_num=1;
 int linea=1;
 int consumir=0;
 char c=' ';
+int terminar=0;
 
 FILE *fuente=NULL;
 FILE *salida=NULL;
@@ -74,7 +75,7 @@ int main (int argc, char* args[])
 				exit(1);
 			}
 			salida=fopen("output.txt","w+");
-			while(!feof(fuente))
+			while(!terminar)
 			{
 				t=getToken();
 				imprimirSalida(t);
@@ -98,7 +99,7 @@ token getToken()
 	estadoActual=INICIO;
 	while(estadoActual!=FIN)
 	{
-		c = getc(fuente);
+		c = fgetc(fuente);
 		consumir=1;
 		switch(estadoActual)
 		{
@@ -122,9 +123,32 @@ token getToken()
 					estadoActual=FIN;
 					compLexActual=TERMINADOR_ENTER;
 				}
-				//~ else if((c==' ')||(c=='\t'))
-				//~ else if((c=='+')||(c='-'))
-				//~ else if((c=='*')||(c=='/'))
+				else if(c=='+')
+				{
+					estadoActual=FIN;
+					compLexActual=OP_SUMA;
+				}
+				else if(c=='-')
+				{
+					lexemaActual[lexemaIndex++]=c;	
+					if((c=fgetc(fuente))=='>')
+					{
+						estadoActual=FIN;
+						compLexActual=DELIMITADOR_CODIGO;
+					}
+					else
+					{
+						ungetc(c,fuente);
+						consumir=0;
+						estadoActual=FIN;
+						compLexActual=OP_SUMA;
+					}
+				}
+				else if((c=='*')||(c=='/'))
+				{
+					estadoActual=FIN;
+					compLexActual=OP_MUL;
+				}
 				//~ else if(c=='<')
 				//~ else if(c=='>')
 				//~ else if(c=='=')
@@ -135,6 +159,12 @@ token getToken()
 				//~ else if(c==')')
 				//~ else if(c==';')
 				//~ else if(c=='?')
+				else if(c==EOF)
+				{
+					terminar=1;
+					estadoActual=FIN;
+					compLexActual=_EOF;
+				}
 				break;
 			case EN_ID:
 				if((!(isalpha(c)))&&(!(isdigit(c))))
@@ -230,14 +260,31 @@ token getToken()
 				}
 				break;
 			case EN_COMENTARIO:
-				while(c=getc(fuente)!='\n');
+				while((c!='\n')&&(c!=EOF))
+				{
+					c=fgetc(fuente);
+				}
 				ungetc(c,fuente);
 				consumir=0;
 				estadoActual=FIN;
 				compLexActual=COMMENT;
 				break;
 			case EN_LITERAL:
-				while(c=getc(fuente))
+				if(c=='"')
+				{
+					estadoActual=FIN;
+					compLexActual=LITERAL_CADENA;
+				}
+				else if(c=='\n')
+				{
+					linea++;
+				}
+				else if(c==EOF)
+				{
+					printf("\n ERROR: Se llegó al fin de archivo sin terminar un literal con ' \" '");
+					estadoActual=FIN;
+					return errorLexico();
+				}
 				break;
 		}
 		if((consumir)&&(lexemaIndex<=MAX_LEX))
@@ -251,7 +298,7 @@ token getToken()
 	}
 	tokenActual.compLex=compLexActual;
 	tokenActual.lexema=lexemaActual;
-	//printf("\nlexema: %s",lexemaActual);
+	printf("\nlexema: %s",lexemaActual);
 	return tokenActual;
 }
 
@@ -295,7 +342,7 @@ void imprimirSalida(token k)
 			fputs("COMA   ",salida);
 			break;
 		case DELIMITADOR_CODIGO:
-			fputs("DELIMITADOR CODIGO   ",salida);
+			fputs("DELIMITADOR_CODIGO   ",salida);
 			break;
 		case PR_IF:
 			fputs("PR_IF   ",salida);
@@ -340,7 +387,7 @@ void saltarLinea()
 {
 	while((c!='\n')&&(c!=EOF))
 	{
-		c=getc(fuente);
+		c=fgetc(fuente);
 	}
 	if(c=='\n')
 		linea++;
