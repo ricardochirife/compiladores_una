@@ -378,7 +378,7 @@ void imprimirSalida(token k)
 }
 
 
-tokenType buscarReservadas(char *p)
+tokenType buscarReservadas(char *p)	//temporal, todavía no hace lo que debe
 {
 	return ID;
 }
