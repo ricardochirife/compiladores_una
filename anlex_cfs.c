@@ -4,34 +4,34 @@
 #define MAX_PAL_RES 4
 #define MAX_LEX 50
 
-typedef enum 							//definimos los tipos de tokens
+typedef enum 	//definimos los tipos de tokens
 {
-	TERMINADOR_PUNTOCOMA,		// ;
-	TERMINADOR_ENTER,				// /n
-	L_PARENTESIS,						// (
-	R_PARENTESIS,						// )
-	OP_CONDICION,						// ?
-	OP_SUMA,							// + -
-	OP_MUL,								// / *
-	OP_RELACIONAL,					// < <= > >= != ==
-	OP_ASIGNACION,					// =
-	L_CORCHETE,							// [
-	R_CORCHETE,							// ]
-	COMA,								// ,
-	DELIMITADOR_CODIGO,				// ->
-	PR_IF,									// if IF
-	PR_TRUE,								// true TRUE
-	PR_FALSE,								// false FALSE
-	PR_ALERT,								// alert ALERT
-	LITERAL_NUM,						// Números con parte decimal y exponentes opcionales
-	LITERAL_CADENA,					// Cadenas ".*"
-	ID,										// Identificadores
-	COMMENT,							// Comentarios #...
-	_EOF,									// Fin de Archivo
-	ERROR_LEXICO						// Token para manejar errores lexicos
+	TERMINADOR_PUNTOCOMA,
+	TERMINADOR_ENTER,
+	L_PARENTESIS,
+	R_PARENTESIS,
+	OP_CONDICION,						
+	OP_SUMA,
+	OP_MUL,
+	OP_RELACIONAL,
+	OP_ASIGNACION,
+	L_CORCHETE,
+	R_CORCHETE,
+	COMA,
+	DELIMITADOR_CODIGO,
+	PR_IF,
+	PR_TRUE,
+	PR_FALSE,
+	PR_ALERT,
+	LITERAL_NUM,
+	LITERAL_CADENA,
+	ID,
+	COMMENT,
+	_EOF,
+	ERROR_LEXICO	// Token para manejar errores lexicos
 }tokenType;
 
-typedef struct 							//definimos la estructura de un token: componente lexico (tokenType) y el lexema
+typedef struct 	//definimos la estructura de un token: componente lexico (tokenType) y el lexema
 {
 	tokenType compLex;
 	char *lexema;
@@ -39,30 +39,30 @@ typedef struct 							//definimos la estructura de un token: componente lexico (
 
 token t;
 
-static struct 								//definimos las palabras reservadas y asociamos a su componente lexico
+static struct 	//definimos las palabras reservadas y asociamos a su componente lexico
 {
 	char* palabra;
 	tokenType token_t;
 }palabrasReservadas[MAX_PAL_RES]={{"IF",PR_IF},{"TRUE",PR_TRUE},{"FALSE",PR_FALSE},{"ALERT",PR_ALERT}};
 
-typedef enum 							//estados del automata para identificar que expresion regular esta reconociendo
+typedef enum 	//estados del automata para identificar que expresion regular esta reconociendo
 {
 	INICIO,EN_ID,EN_NUMERO,EN_COMENTARIO,EN_LITERAL,FIN
 }estado;
 
-token getToken(void); 					//Devulve el siguiente token del fuente
+token getToken(void); 			//Devulve el siguiente token del fuente
 tokenType buscarReservadas(char *p); 	//Busca si una cadena es una palabra reservada o es un id
-void imprimirSalida(token k); 			//Imprime el componente lexico al archivo de salida
-void saltarLinea();						//Salta a la siguiente línea del fuente
-token errorLexico();						//Devuelve un token de error lexico
-void aMayus(char a[], char b[]);			//Convierte una cadena a mayusculas. Uso para buscar las palabras reservadas
+void imprimirSalida(token k); 	//Imprime el componente lexico al archivo de salida
+void saltarLinea();				//Salta a la siguiente línea del fuente
+token errorLexico();			//Devuelve un token de error lexico
+void aMayus(char a[], char b[]);//Convierte una cadena a mayusculas. Uso para buscar las palabras reservadas
 
-estado estadoActual;					//estado actual del automata
-int estado_num=1;						//estado actual del automata que reconoce numeros
-int linea=1;								//numero de linea
-int consumir=0;							//determina si el caracter debe ser consumido o devuelto al fuente
+estado estadoActual;//estado actual del automata
+int estado_num=1;	//estado actual del automata que reconoce numeros
+int linea=1;		//numero de linea
+int consumir=0;		//determina si el caracter debe ser consumido o devuelto al fuente
 char c=' ';
-int terminar=0;							//bandera para terminar de analizar el fuente
+int terminar=0;		//bandera para terminar de analizar el fuente
 
 FILE *fuente=NULL;
 FILE *salida=NULL;
@@ -106,18 +106,18 @@ token getToken()
 		switch(estadoActual)
 		{
 			case INICIO:
-				if(isdigit(c)) 								//si encuentra un digito, cambiamos el estado actual del automata y vamos a reconocer numeros
+				if(isdigit(c)) 	//si encuentra un digito, cambiamos el estado actual del automata y vamos a reconocer numeros
 				{
 					estadoActual=EN_NUMERO;
 					estado_num=1;
 				}
-				else if(isalpha(c))					 		//si encuentra una letra, reconocemos identificadores
+				else if(isalpha(c))	//si encuentra una letra, reconocemos identificadores
 					estadoActual=EN_ID;
 				else if(c=='"')
-					estadoActual=EN_LITERAL; 			//si encuentra comillas, reconocemos literales
+					estadoActual=EN_LITERAL; //si encuentra comillas, reconocemos literales
 				else if(c=='#')
-					estadoActual=EN_COMENTARIO; 	//si encuentra numeral, reconocemos comentarios
-				else if((c==' ')||(c=='\t')) 					// ignoramos espacios en blanco y tabulaciones
+					estadoActual=EN_COMENTARIO;	//si encuentra numeral, reconocemos comentarios
+				else if((c==' ')||(c=='\t')) 	// ignoramos espacios en blanco y tabulaciones
 					continue;
 				else if(c=='\n')
 				{
@@ -130,8 +130,8 @@ token getToken()
 					estadoActual=FIN;
 					compLexActual=OP_SUMA;
 				}
-				else if(c=='-')								//si encontramos un - , y el siguiente caracter es un >  consumimos los dos ya que es un token de dos caracteres
-				{											//sino es un >, devolvemos el caracter al fuente
+				else if(c=='-')	//si encontramos un - , y el siguiente caracter es un >  consumimos los dos ya que es un token de dos caracteres
+				{				//sino es un >, devolvemos el caracter al fuente
 					lexemaActual[lexemaIndex++]=c;	
 					estadoActual=FIN;
 					if((c=fgetc(fuente))=='>')
@@ -150,7 +150,7 @@ token getToken()
 					estadoActual=FIN;
 					compLexActual=OP_MUL;
 				}
-				else if(c=='<')							//Si viene un < y despues un = consumimos los dos, sino devolvemos el caracter
+				else if(c=='<')	//Si viene un < y despues un = consumimos los dos, sino devolvemos el caracter
 				{
 					lexemaActual[lexemaIndex++]=c;
 					estadoActual=FIN;
@@ -161,7 +161,7 @@ token getToken()
 						consumir=0;
 					}
 				}
-				else if(c=='>'	)						//Si viene un > y despues un = consumimos los dos, sino devolvemos el caracter
+				else if(c=='>'	)	//Si viene un > y despues un = consumimos los dos, sino devolvemos el caracter
 				{
 					lexemaActual[lexemaIndex++]=c;
 					estadoActual=FIN;
@@ -172,7 +172,7 @@ token getToken()
 						consumir=0;
 					}
 				}
-				else if(c=='=')							//Si viene un = y despues otro = consumimos los dos, sino devolvemos el caracter
+				else if(c=='=')		//Si viene un = y despues otro = consumimos los dos, sino devolvemos el caracter
 				{
 					lexemaActual[lexemaIndex++]=c;	
 					estadoActual=FIN;
@@ -187,7 +187,7 @@ token getToken()
 						compLexActual=OP_ASIGNACION;
 					}
 				}
-				else if(c=='!')							//Si viene un !, necesariamente el siguiente caracter debe ser un = segun la gramatica. Si no viene el = mostramos error
+				else if(c=='!')		//Si viene un !, necesariamente el siguiente caracter debe ser un = segun la gramatica. Si no viene el = mostramos error
 				{
 					lexemaActual[lexemaIndex++]=c;
 					if((c=fgetc(fuente))=='=')
@@ -254,7 +254,7 @@ token getToken()
 					return errorLexico();
 				}
 				break;
-			case EN_ID:										//reconocemos identificadores
+			case EN_ID:			//reconocemos identificadores
 				if((!(isalpha(c)))&&(!(isdigit(c))))
 				{
 					ungetc(c,fuente);
@@ -264,9 +264,9 @@ token getToken()
 				}
 				break;
 			case EN_NUMERO:
-				switch(estado_num)							//reconocemos numeros
+				switch(estado_num)	//reconocemos numeros
 				{
-					case 1:										//estado 1 pueden venir numeros, un . o una e
+					case 1:		//estado 1 pueden venir numeros, un . o una e
 						if(isdigit(c))
 							estado_num=1;
 						else if(c=='.')
@@ -281,7 +281,7 @@ token getToken()
 							compLexActual=LITERAL_NUM;
 						}
 						break;
-					case 2:										//estado 2 Aceptacion. Vino el punto y necesariamente debe venir un numero
+					case 2:		//estado 2 Aceptacion. Vino el punto y necesariamente debe venir un numero
 						if(isdigit(c))
 							estado_num=3;
 						else
@@ -294,7 +294,7 @@ token getToken()
 							return errorLexico();
 						}
 						break;
-					case 3:										//estado 3 Aceptacion. Pueden venir numeros o una e
+					case 3:		//estado 3 Aceptacion. Pueden venir numeros o una e
 						if(isdigit(c))
 							estado_num=3;
 						else if(tolower(c)=='e')
@@ -307,7 +307,7 @@ token getToken()
 							compLexActual=LITERAL_NUM;
 						}
 						break;
-					case 4:										//estado 4. Vino la e y pueden venir + - o numeros
+					case 4:		//estado 4. Vino la e y pueden venir + - o numeros
 						if((c=='+')||(c=='-'))
 							estado_num=5;					
 						else if(isdigit(c))
@@ -322,7 +322,7 @@ token getToken()
 							return errorLexico();
 						}
 						break;
-					case 5:										//estado 5. Vino un + o -. Deben venir numeros
+					case 5:		//estado 5. Vino un + o -. Deben venir numeros
 						if(isdigit(c))
 							estado_num=6;
 						else
@@ -335,7 +335,7 @@ token getToken()
 							return errorLexico();
 						}
 						break;
-					case 6:										//estado 6 Aceptacion. Solo numeros
+					case 6:		//estado 6 Aceptacion. Solo numeros
 						if(isdigit(c))
 							estado_num=6;
 						else
@@ -347,7 +347,7 @@ token getToken()
 						}
 				}
 				break;
-			case EN_COMENTARIO:							//estamos reconociendo comentarios. Ignoramos todo hasta que venga un enter o EOF
+			case EN_COMENTARIO:	//estamos reconociendo comentarios. Ignoramos todo hasta que venga un enter o EOF
 				while((c!='\n')&&(c!=EOF))
 				{
 					c=fgetc(fuente);
@@ -357,7 +357,7 @@ token getToken()
 				estadoActual=FIN;
 				compLexActual=COMMENT;
 				break;
-			case EN_LITERAL:									//estamos reconociendo literales. Seguimos hasta que vengan las comillas de cierre
+			case EN_LITERAL:	//estamos reconociendo literales. Seguimos hasta que vengan las comillas de cierre
 				if(c=='"')
 				{
 					estadoActual=FIN;
@@ -367,7 +367,7 @@ token getToken()
 				{
 					linea++;
 				}
-				else if(c==EOF)								//se termino el archivo antes de cerrar las comillas. error
+				else if(c==EOF)	//se termino el archivo antes de cerrar las comillas. error
 				{
 					printf("\n ERROR: Se llegó al fin de archivo sin terminar un literal con ' \" '");
 					estadoActual=FIN;
@@ -375,12 +375,12 @@ token getToken()
 				}
 				break;
 		}
-		if((consumir)&&(lexemaIndex<=MAX_LEX))		//vamos almacenando los caracteres que deben se consumidos para formar el lexema
+		if((consumir)&&(lexemaIndex<=MAX_LEX))	//vamos almacenando los caracteres que deben se consumidos para formar el lexema
 			lexemaActual[lexemaIndex++]=c;
 		if(estadoActual==FIN)								
 		{
-			lexemaActual[lexemaIndex]='\0'; 				//si estado es fin agregamos el caracter de fin de cadena al lexema
-			if(compLexActual==ID)							//en caso de que el token sea un ID buscamos en la lista de palabras reservadas
+			lexemaActual[lexemaIndex]='\0'; //si estado es fin agregamos el caracter de fin de cadena al lexema
+			if(compLexActual==ID)			//en caso de que el token sea un ID buscamos en la lista de palabras reservadas
 				compLexActual=buscarReservadas(lexemaActual);
 		}
 	}
@@ -390,7 +390,7 @@ token getToken()
 	return tokenActual;
 }
 
-void imprimirSalida(token k)								//imprime el componente lexico en el archivo de salida
+void imprimirSalida(token k) //imprime el componente lexico en el archivo de salida
 {	switch (k.compLex)
 	{
 		case TERMINADOR_PUNTOCOMA:
@@ -466,7 +466,7 @@ void imprimirSalida(token k)								//imprime el componente lexico en el archivo
 }
 
 
-tokenType buscarReservadas(char *p)	//temporal, todavía no hace lo que debe
+tokenType buscarReservadas(char *p)	
 {
 	int i;
 	char pp[strlen(p)+1];
