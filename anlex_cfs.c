@@ -60,6 +60,7 @@ void aMayus(char a[], char b[]);//Convierte una cadena a mayusculas. Uso para bu
 estado estadoActual;//estado actual del automata
 int estado_num=1;	//estado actual del automata que reconoce numeros
 int linea=1;		//numero de linea
+int linea_aux=0;	//numero de linea donde comenzo un literal. Se utiliza para manejar errores en literales que contienen \n
 int consumir=0;		//determina si el caracter debe ser consumido o devuelto al fuente
 char c=' ';
 int terminar=0;		//bandera para terminar de analizar el fuente
@@ -73,10 +74,18 @@ int main (int argc, char* args[])
 		{
 			if (!(fuente=fopen(args[1],"rt")))
 			{
-				printf("Archivo no encontrado.\n");
+				printf("\nanlex_cfs ERROR. Archivo no encontrado.\n");
 				exit(1);
 			}
-			salida=fopen("output.txt","w+");
+			if (argc==2)
+				salida=fopen("output.txt","w+");
+			else if(argc==3)
+				salida=fopen(args[2],"w+");
+			else
+			{
+				printf("\nanlex_cfs ERROR. Parámetros Incorrectos.\n");
+				exit(1);
+			}
 			while(!terminar)
 			{
 				t=getToken();
@@ -84,8 +93,10 @@ int main (int argc, char* args[])
 			}
 			fclose(fuente);
 			fclose(salida);
-		}else{
-			printf("Debe pasar como parametro el path al archivo fuente.\n");
+		}
+		else
+		{
+			printf("\nanlex_cfs ERROR. Debe pasar como parámetro el path al archivo fuente.\n");
 			exit(1);
 		}
 		printf("\n");
@@ -114,7 +125,10 @@ token getToken()
 				else if(isalpha(c))	//si encuentra una letra, reconocemos identificadores
 					estadoActual=EN_ID;
 				else if(c=='"')
+				{
+					linea_aux=linea;
 					estadoActual=EN_LITERAL; //si encuentra comillas, reconocemos literales
+				}
 				else if(c=='#')
 					estadoActual=EN_COMENTARIO;	//si encuentra numeral, reconocemos comentarios
 				else if((c==' ')||(c=='\t')) 	// ignoramos espacios en blanco y tabulaciones
@@ -249,7 +263,7 @@ token getToken()
 				}
 				else
 				{
-					printf("\n ERROR LEXICO: LÍNEA %d: El caracter \"%c\" es inválido",linea,c);
+					printf("\n ERROR LEXICO: LÍNEA %d: No se esperaba el caracter \"%c\" ",linea,c);
 					saltarLinea();
 					return errorLexico();
 				}
@@ -369,7 +383,7 @@ token getToken()
 				}
 				else if(c==EOF)	//se termino el archivo antes de cerrar las comillas. error
 				{
-					printf("\n ERROR: Se llegó al fin de archivo sin terminar un literal con ' \" '");
+					printf("\n ERROR: LINEA %d: Se llegó al fin de archivo sin terminar un literal con ' \" '",linea_aux);
 					estadoActual=FIN;
 					return errorLexico();
 				}
@@ -386,7 +400,7 @@ token getToken()
 	}
 	tokenActual.compLex=compLexActual;
 	tokenActual.lexema=lexemaActual;
-	printf("\nlexema: %s",lexemaActual);
+	//printf("\nlexema: %s",lexemaActual); //linea de prueba
 	return tokenActual;
 }
 
