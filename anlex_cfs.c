@@ -55,6 +55,8 @@ tokenType buscarReservadas(char *p); 	//Busca si una cadena es una palabra reser
 void imprimirSalida(token k); 			//Imprime el archivo de salida
 void saltarLinea();
 token errorLexico();
+char *aMayus(char a[]);
+
 estado estadoActual;
 int estado_num=1;
 int linea=1;
@@ -131,16 +133,15 @@ token getToken()
 				else if(c=='-')
 				{
 					lexemaActual[lexemaIndex++]=c;	
+					estadoActual=FIN;
 					if((c=fgetc(fuente))=='>')
 					{
-						estadoActual=FIN;
 						compLexActual=DELIMITADOR_CODIGO;
 					}
 					else
 					{
 						ungetc(c,fuente);
 						consumir=0;
-						estadoActual=FIN;
 						compLexActual=OP_SUMA;
 					}
 				}
@@ -149,21 +150,108 @@ token getToken()
 					estadoActual=FIN;
 					compLexActual=OP_MUL;
 				}
-				//~ else if(c=='<')
-				//~ else if(c=='>')
-				//~ else if(c=='=')
-				//~ else if(c=='[')
-				//~ else if(c==']')
-				//~ else if(c==',')
-				//~ else if(c=='(')
-				//~ else if(c==')')
-				//~ else if(c==';')
-				//~ else if(c=='?')
+				else if(c=='<')
+				{
+					lexemaActual[lexemaIndex++]=c;
+					estadoActual=FIN;
+					compLexActual=OP_RELACIONAL;
+					if((c=fgetc(fuente))!='=')
+					{
+						ungetc(c,fuente);
+						consumir=0;
+					}
+				}
+				else if(c=='>')
+				{
+					lexemaActual[lexemaIndex++]=c;
+					estadoActual=FIN;
+					compLexActual=OP_RELACIONAL;
+					if((c=fgetc(fuente))!='=')
+					{
+						ungetc(c,fuente);
+						consumir=0;
+					}
+				}
+				else if(c=='=')
+				{
+					lexemaActual[lexemaIndex++]=c;	
+					estadoActual=FIN;
+					if((c=fgetc(fuente))=='=')
+					{
+						compLexActual=OP_RELACIONAL;
+					}
+					else
+					{
+						ungetc(c,fuente);
+						consumir=0;
+						compLexActual=OP_ASIGNACION;
+					}
+				}
+				else if(c=='!')
+				{
+					lexemaActual[lexemaIndex++]=c;
+					if((c=fgetc(fuente))=='=')
+					{
+						estadoActual=FIN;
+						compLexActual=OP_RELACIONAL;
+					}
+					else
+					{
+						if(c==EOF)
+							printf("\n ERROR: No se esperaba fin de archivo");
+						else
+							printf("\n ERROR LEXICO: LÍNEA %d: Se esperaba = encontró el caracter \"%c\"",linea,c);
+						saltarLinea();
+						return errorLexico();
+					}
+					
+				}
+				else if(c==']')
+				{
+					estadoActual=FIN;
+					compLexActual=R_CORCHETE;
+				}
+				else if(c=='[')
+				{
+					estadoActual=FIN;
+					compLexActual=L_CORCHETE;
+				}
+				else if(c==',')
+				{
+					estadoActual=FIN;
+					compLexActual=COMA;
+				}
+				else if(c=='(')
+				{
+					estadoActual=FIN;
+					compLexActual=L_PARENTESIS;
+				}
+				else if(c==')')
+				{
+					estadoActual=FIN;
+					compLexActual=R_PARENTESIS;
+				}
+				else if(c==';')
+				{
+					estadoActual=FIN;
+					compLexActual=TERMINADOR_PUNTOCOMA;
+				}
+				else if(c=='?')
+				{
+					estadoActual=FIN;
+					compLexActual=OP_CONDICION;
+				}
 				else if(c==EOF)
 				{
 					terminar=1;
 					estadoActual=FIN;
 					compLexActual=_EOF;
+				}
+				else
+				{
+					printf("\n ERROR LEXICO: LÍNEA %d: El caracter \"%c\" es inválido",linea,c);
+					saltarLinea();
+					return errorLexico();
 				}
 				break;
 			case EN_ID:
@@ -380,6 +468,15 @@ void imprimirSalida(token k)
 
 tokenType buscarReservadas(char *p)	//temporal, todavía no hace lo que debe
 {
+	//~ int i;
+	//~ char pp;
+	//~ pp=p;
+	//~ aMayus(pp);
+	//~ for(i=0;i<MAX_PAL_RES;i++)
+	//~ {
+		//~ if((strcmp(pp,palabrasReservadas[i].palabra))==0)
+			//~ return palabrasReservadas[i].token_t;
+	//~ }
 	return ID;
 }
 
@@ -399,6 +496,16 @@ token errorLexico()
 	tk.compLex=ERROR_LEXICO;
 	tk.lexema="";
 	return tk;
+}
+char *aMayus(char a[])
+{
+	int i=0;
+	while(a[i])
+	{
+		a[i]=toupper(a[i]);
+		i++;
+	}
+	return a;
 }
 
 
