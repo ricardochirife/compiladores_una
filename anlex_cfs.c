@@ -122,7 +122,7 @@ token getToken()
 					estadoActual=EN_NUMERO;
 					estado_num=1;
 				}
-				else if(isalpha(c))	//si encuentra una letra, reconocemos identificadores
+				else if((isalpha(c))||(c=='_'))	//si encuentra una letra o un guion bajo, reconocemos identificadores
 					estadoActual=EN_ID;
 				else if(c=='"')
 				{
@@ -269,7 +269,7 @@ token getToken()
 				}
 				break;
 			case EN_ID:			//reconocemos identificadores
-				if((!(isalpha(c)))&&(!(isdigit(c))))
+				if((!(isalpha(c)))&&(!(isdigit(c)))&&(c!='_'))
 				{
 					ungetc(c,fuente);
 					consumir=0;
